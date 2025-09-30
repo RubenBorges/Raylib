@@ -13,25 +13,25 @@ int main()
 {
     //Variables, Constants and Devices
     const int screenWidth{ 800 },
-              screenHeight{ 600 };
-	//std::random device to set random positions for power-up
-    std::random_device randXPos, 
-                       randYPos;
-    std::mt19937 genX(randXPos()),  
-                 genY(randYPos()); // Mersenne Twister generator
+        screenHeight{ 600 };
+    //std::random device to set random positions for power-up
+    std::random_device randXPos,
+        randYPos;
+    std::mt19937 genX(randXPos()),
+        genY(randYPos()); // Mersenne Twister generator
     std::uniform_int_distribution<> disX(0, (screenWidth - 25)),
-                                    disY(0, (screenHeight - 25)); // Range [0, ScreenWidth-25]
+        disY(0, (screenHeight - 25)); // Range [0, ScreenWidth-25]
     Vector2 targetOrigin = { screenWidth / 2, screenHeight / 2 },
-            recTwoOrigin = { (screenWidth) / 5, (screenHeight / 2) - 50 },
-            recThreeOrigin = { (screenWidth / 5) * 3, (screenHeight / 2) - 50 },
-            powerBumpOrigin = {disX(genX),disY(genY)};
+        recTwoOrigin = { (screenWidth) / 5, (screenHeight / 2) - 50 },
+        recThreeOrigin = { (screenWidth / 5) * 3, (screenHeight / 2) - 50 },
+        powerBumpOrigin = { disX(genX),disY(genY) };
     int recWidth{ 100 }, recHeight{ 100 }, factor{ 0 }, bumpFactor{ 3 }, powerBumpBoost{ 0 }, collisionCounter{ 0 }, powerUpWidth{ 25 }, powerUpHeight{ 25 };
     Camera2D camera = { Vector2 {0,0},targetOrigin, 0.0f, 1.0f };
     Rectangle rec = { targetOrigin.x - 50, targetOrigin.y - 50 ,recWidth / 2,recHeight / 2 },
         recTwo = { recTwoOrigin.x, recTwoOrigin.y, recWidth / 2, recHeight / 2 },
         recThree = { recThreeOrigin.x, recThreeOrigin.y, recWidth / 2, recHeight / 2 },
-        powerBump = { powerBumpOrigin.x, powerBumpOrigin.y, powerUpWidth, powerUpHeight};
-	bool powerUpActive{ false };
+        powerBump = { powerBumpOrigin.x, powerBumpOrigin.y, powerUpWidth, powerUpHeight };
+    bool powerUpActive{ false };
     bool objectVisible[4]{ true, true, true, true };
     InitWindow(screenWidth, screenHeight, "Raylib basic window");
     SetTargetFPS(60);
@@ -43,14 +43,14 @@ int main()
     InitAudioDevice();
     std::filesystem::path assetBase = std::filesystem::current_path() / "AudioFX" / "Collision";
 
-    Sound soundClips[3] = {LoadSound("resources/AudioFX/Collision/beer-bottles-82232.mp3"),
+    Sound soundClips[3] = { LoadSound("resources/AudioFX/Collision/beer-bottles-82232.mp3"),
                            LoadSound("resources/AudioFX/Collision/plastic-hit-3-34297.mp3"),
-                           LoadSound("resources/AudioFX/Reset/a-sudden-appearance-143034.mp3")};
+                           LoadSound("resources/AudioFX/Reset/a-sudden-appearance-143034.mp3") };
 
     if (IsSoundValid(soundClips[0]) && IsSoundValid(soundClips[1]) && IsSoundValid(soundClips[2])) std::cout << "Sound clips loaded successfully\n";
     else std::cout << "Sound clips failed to load\n";
     // Initial sound to indicate start of program
-    PlaySound(soundClips[2]); 
+    PlaySound(soundClips[2]);
     while (!WindowShouldClose()) {
         //Check Collision
         bool isCollision = (CheckCollisionRecs(rec, recTwo) || CheckCollisionRecs(rec, recThree));
@@ -81,8 +81,8 @@ int main()
         if (isCollision) {
             velocityY = -velocityY;
             velocityY > 0 ? factor = 1 : factor = -1;
-            if (velocityY != 0)  rec.y = rec.y + ((rec.height / bumpFactor)* factor);
-            if (CollisionTwo && velocityY != 0) recTwo.y = recTwo.y + (((recTwo.height / bumpFactor) + powerBumpBoost) * - factor);
+            if (velocityY != 0)  rec.y = rec.y + ((rec.height / bumpFactor) * factor);
+            if (CollisionTwo && velocityY != 0) recTwo.y = recTwo.y + (((recTwo.height / bumpFactor) + powerBumpBoost) * -factor);
             if (CollisionThree && velocityY != 0) recThree.y = recThree.y + (((recThree.height / bumpFactor) + powerBumpBoost) * -factor);
         }
         rec.y += velocityY;
@@ -90,7 +90,7 @@ int main()
         //Collision Sound Effects
         if (CollisionTwo) PlaySound(soundClips[0]);
         if (CollisionThree) PlaySound(soundClips[1]);
-		if (CollisionPowerUp) { objectVisible[3] = false; powerUpActive = true; PlaySound(soundClips[0]); powerBumpBoost = 25.0f; }
+        if (CollisionPowerUp) { objectVisible[3] = false; powerUpActive = true; PlaySound(soundClips[0]); powerBumpBoost = 25.0f; }
         //Reset Counter and Positions
         if (IsKeyDown(KEY_R)) {
             collisionCounter = 0;
@@ -105,7 +105,7 @@ int main()
             powerUpActive = false;
             powerBumpBoost = 0.0f;
             powerBump.x = disX(genX);// Generate random numbers to
-			powerBump.y = disY(genY);// randomly place power-up
+            powerBump.y = disY(genY);// randomly place power-up
         }
 
         //Escape Key to Exit
@@ -140,12 +140,11 @@ int main()
         EndDrawing();
     }
 
-	//Unload and Close
+    //Unload and Close
     for (int i = 0; i < 3; i++) {
         UnloadSound(soundClips[i]);
         std::println("soundClips[{0}] UNLOADED SUCCESSFULLY", i);
     }
     CloseWindow();
     return 0;
-} 
-
+}
