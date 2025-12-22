@@ -18,6 +18,9 @@
     <ClCompile Include="Raylib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Vec2F.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Media Include="resources\AudioFX\Reset\a-sudden-appearance-143034.mp3">
@@ -29,5 +32,10 @@
     <Media Include="resources\AudioFX\Collision\plastic-hit-3-34297.mp3">
       <Filter>Resource Files</Filter>
     </Media>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Vec2F.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

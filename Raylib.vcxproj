@@ -168,11 +168,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Raylib.cpp" />
+    <ClCompile Include="Vec2F.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Media Include="resources\AudioFX\Collision\beer-bottles-82232.mp3" />
     <Media Include="resources\AudioFX\Collision\plastic-hit-3-34297.mp3" />
     <Media Include="resources\AudioFX\Reset\a-sudden-appearance-143034.mp3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Vec2F.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
