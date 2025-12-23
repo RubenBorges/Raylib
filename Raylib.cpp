@@ -11,7 +11,7 @@
 import std;
 
 enum class GHOST : int { BLINKY = 0, PINKY = 1, INKY = 2, CLYDE = 3, FUNKY = 4, SUE = 5 };
-enum class ANM : int {
+enum class ANIM : int {
 	RIGHT_A = 0, RIGHT_B = 1,
 	DOWNA = 2, DOWN_B = 3,
 	LEFT_A = 4, LEFT_B = 5,
@@ -24,7 +24,7 @@ enum class ANIMATION_STATE : int { IDLE = 0, MOVING = 1 };
 enum class FRAME_FMT :bool { IMAGE = false, TEXTURE = true };
 enum class SPRITE_TYPE : int { PLAYER = 0, ENEMY = 1, NPC = 2, OBJECT = 3 };
 //false = 0, true = 1; IF cycleAnimation == true (1) THEN  !cycleAnimation = false (0) THEN ANOTHER !cycleAnimation == true (1).. (1>0>1>0>1>0....); 
-enum class BOOLEAN_SWITCH : bool {
+enum class BOOLEAN_SWITCH : int {
 	BASE = false // =0
 	, CYCLE = true//  =1 
 };
@@ -34,12 +34,12 @@ class GameSprite {
 	int id = genID();	//std::random device to set random positions for power-up
 	int FrameCount;
 	Image* animationFrames;
-	Texture2D activeTexture, * animationFrames_T;
-	Vec2F size, velocity{ 0.0f,0.0f }, position{ 0.0f,0.0f }, lastPosition{ position };
+	Texture2D activeTexture, *animationFrames_T;
+	Vec2F size, velocity{ 0.0f,0.0f }, position{ 0.0f,0.0f }, lastPosition{ 0.0f,0.0f };
 	bool isAnimating{ false }, cycleAnimation{ false }, frameType;// false = Image, true = Texture2D
 	BOOLEAN_SWITCH animationCycleSwitch{ BOOLEAN_SWITCH::BASE };
 	ANIMATION_STATE currentAnimationState{ ANIMATION_STATE::IDLE };
-	DIR currentDirection{ DIR::NULL_DIR };
+	DIR currentDirection{ DIR::DOWN };
 
 public:
 	GameSprite() = default;
@@ -76,7 +76,13 @@ public:
 		storeAnimations(texturearray, _frameCount);
 		return;
 	}
-	void animate() { if (currentAnimationState == ANIMATION_STATE::MOVING) animateSprite(); }
+	void animate() { if (currentAnimationState == ANIMATION_STATE::MOVING) animateSprite();}
+	void animateSprite() {
+		animationCycleSwitch == BOOLEAN_SWITCH::BASE ? animationCycleSwitch = BOOLEAN_SWITCH::CYCLE : animationCycleSwitch = BOOLEAN_SWITCH::BASE;
+		const int frameIndex = (static_cast<int>(currentDirection) * 2) + (static_cast<int>(animationCycleSwitch));
+		setActiveTexture( animationFrames_T[frameIndex] );
+	}
+
 	void setAnimationState(const ANIMATION_STATE state) { currentAnimationState = state; }
 	int animationState() const { return static_cast<int>(currentAnimationState); }
 	GameSprite* SpritePtr() { return this; }
@@ -141,14 +147,18 @@ public:
 	Rectangle boundingBox() { return Rectangle{ position.x, position.y, size.x, size.y }; }
 	Vec2F Location() { return (position + size); }
 	Texture2D& ActiveTexture() { return activeTexture; }
-
- //Returns location of object center
-private:
-	void animateSprite() {
-		animationCycleSwitch = static_cast<BOOLEAN_SWITCH>(!(static_cast<bool>(animationCycleSwitch)));
-		const int frameIndex = (static_cast<int>(currentDirection) * 2) + (static_cast<int>(animationCycleSwitch));
-		frameType ? setActiveTexture(animationFrames_T[frameIndex]) : setActiveTexture(animationFrames[frameIndex]);
+	Rectangle indexedFrameRect(const int frameIndex) {
+		if (frameType == static_cast<bool>(FRAME_FMT::IMAGE)) {
+			return Rectangle{ 0.0f,0.0f,static_cast<float>(animationFrames[frameIndex].width),static_cast<float>(animationFrames[frameIndex].height) };
+		}
+		else {
+			return Rectangle{ 0.0f,0.0f,static_cast<float>(animationFrames_T[frameIndex].width),static_cast<float>(animationFrames_T[frameIndex].height) };
+		}
 	}
+	Rectangle FrameRect() { return Rectangle{ position.x,position.y, size.x, size.y }; }
+
+ 
+private:
 	void setSize(Image image) { size = Vector2{ static_cast<float>(image.width), static_cast<float>(image.height) }; }
 	void setSize(Texture2D texture) { size = Vector2{ static_cast<float>(texture.width), static_cast<float>(texture.height) }; }
 	void storeAnimations(Image* imagearray, const int _frameCount) {
@@ -167,6 +177,7 @@ private:
 		}
 		setActiveTexture(animationFrames_T[static_cast<int>(currentDirection) * 2]);
 	}
+
 	void setActiveTexture(const Image image) { activeTexture = LoadTextureFromImage(image); setSize(image); }
 	void setActiveTexture(const Texture2D _texture) { activeTexture = _texture; setSize(_texture); }
 	int genID() {
@@ -182,35 +193,35 @@ int main()
 {
 	//will hold textures of current ghost animation frames
 	Texture blinky, pinky, inky, clyde, funky, sue;
-	Image image = LoadImage("C:\\Projects\\Raylib\\assets\\pacman\\CEDX\\Character Skins - Smooth.png");
+	Image image = LoadImage( "C:\\Projects\\Raylib\\assets\\pacman\\CEDX\\Character Skins - Smooth.png" );
 	const int spriteWidth = 50;
 	const int spriteHeight = 50;
 	const int ghostSprites = 6;
 	const int ghostAnimeFrames = 10;
 
-	std::vector<std::vector<Image>> ghostAnimeSheet;
+	std::vector<std::vector<Image>> ghostImgSheet;
 	std::vector<std::vector<Texture2D>> ghostTextSheet;
-	ghostAnimeSheet.resize(ghostSprites);
-	ghostTextSheet.resize(ghostSprites);
-	for (int i = 0; i < ghostSprites; ++i) {
-		ghostAnimeSheet[i].resize(ghostAnimeFrames);
-		ghostTextSheet[i].resize(ghostAnimeFrames);
+	ghostImgSheet.resize( ghostSprites );
+	ghostTextSheet.resize( ghostSprites );
+	for ( int i = 0; i < ghostSprites; ++i ) {
+		ghostImgSheet[i].resize( ghostAnimeFrames );
+		ghostTextSheet[i].resize( ghostAnimeFrames );
 	}
 
-
+	Texture2D testTex = ghostTextSheet[0][0];
 //	std::println("Texture loaded with ID: {0}, Width: {1}, Height: {2}", texture.id, texture.width, texture.height);
 	//Variables, Constants and Devices
 	const int screenWidth{ 800 },
 		screenHeight{ 600 };
 	//std::random device to set random positions for power-up
 	std::random_device randXPos, randYPos;
-	std::mt19937 genX(randXPos()), genY(randYPos()); // Mersenne Twister generator
-	std::uniform_int_distribution<> disX(0, (screenWidth - 25)), disY(0, (screenHeight - 25)); // Range [0, ScreenWidth-25]
+	std::mt19937 genX( randXPos() ), genY( randYPos() ); // Mersenne Twister generator
+	std::uniform_int_distribution<> disX( 0, (screenWidth - 25) ), disY( 0, (screenHeight - 25) ); // Range [0, ScreenWidth-25]
 
 	Vector2 targetOrigin = { screenWidth / 2, screenHeight / 2 },
 		recTwoOrigin = { (screenWidth) / 5, (screenHeight / 2) - 50 },
 		recThreeOrigin = { (screenWidth / 5) * 3, (screenHeight / 2) - 50 },
-		powerBumpOrigin = { disX(genX),disY(genY) };
+		powerBumpOrigin = { disX( genX ),disY( genY ) };
 	int recWidth{ 100 }, recHeight{ 100 }, factor{ 0 }, bumpFactor{ 3 }, powerBumpBoost{ 0 }, collisionCounter{ 0 }, spriteHitCount{ 0 }, powerUpWidth{ 25 }, powerUpHeight{ 25 };
 	Camera2D camera = { Vector2 {0,0},targetOrigin, 0.0f, 1.0f };
 	Rectangle rec = { targetOrigin.x - 50, targetOrigin.y - 50 ,recWidth / 2,recHeight / 2 },
@@ -219,13 +230,13 @@ int main()
 		powerBump = { powerBumpOrigin.x, powerBumpOrigin.y, powerUpWidth, powerUpHeight };
 	bool powerUpActive{ false };
 	bool objectVisible[4]{ true, true, true, true };
-	InitWindow(screenWidth, screenHeight, "Raylib basic window");
-	SetTargetFPS(60);
+	InitWindow( screenWidth, screenHeight, "Raylib basic window" );
+	SetTargetFPS( 60 );
 
-	for (int i = 0; i < ghostSprites; i++) {
-		for (int j = 0; j < ghostAnimeFrames; j++) {
+	for ( int i = 0; i < ghostSprites; i++ ) {
+		for ( int j = 0; j < ghostAnimeFrames; j++ ) {
 			ghostTextSheet[i][j] = LoadTextureFromImage(
-				ghostAnimeSheet[i][j] = ImageFromImage(image, Rectangle{ static_cast<float>(i * spriteWidth), static_cast<float>(j * spriteHeight), static_cast<float>(spriteWidth), static_cast<float>(spriteHeight) })
+				ghostImgSheet[i][j] = ImageFromImage( image, Rectangle{ static_cast<float>( i * spriteWidth ), static_cast<float>( j * spriteHeight ), static_cast<float>( spriteWidth ), static_cast<float>( spriteHeight ) } )
 			);
 		}
 
@@ -236,19 +247,24 @@ int main()
 	//Rectangle sourceRect = { spriteWidth * currentFrame, 0, spriteWidth, spriteHeight};
 	Rectangle sourceRect = { 0, 0, spriteWidth, spriteHeight };
 	Rectangle destRect = { 200, 200, spriteWidth * 2, spriteHeight * 2 };
+	GameSprite Blinky( "Blinky", ghostAnimeFrames, ghostTextSheet[static_cast<int>( GHOST::BLINKY )].data() );
+	std::println( "BLINKY HAS {0}",ghostAnimeFrames);
+	std::println( "BLINKY HAS {0}",ghostAnimeFrames);
+	std::println( "BLINKY HAS {0}",ghostAnimeFrames);
+	std::println( "BLINKY HAS {0}",ghostAnimeFrames);
 	// columns of 10 rows: 6 ghosts + 1 (5 empty, 4 eyes) + 1 pacman + 1 (4 empty,( 1 small dotsx2, med dot,big dot) x2 )currentFrame
+	//std::vector<GameSprite> ghosts = { GameSprite( "Blinky", ghostAnimeFrames, ghostAnimeSheet[static_cast<int>(GHOST::BLINKY)].data() ),
+	//	GameSprite( "Pinky", ghostAnimeFrames, ghostAnimeSheet[static_cast<int>(GHOST::PINKY)].data() ),
+	//	GameSprite( "Inky", ghostAnimeFrames, ghostAnimeSheet[static_cast<int>(GHOST::INKY)].data() ),
+	//	GameSprite( "Clyde", ghostAnimeFrames, ghostAnimeSheet[static_cast<int>(GHOST::CLYDE)].data() ),
+	//	GameSprite( "Funky", ghostAnimeFrames, ghostAnimeSheet[static_cast<int>(GHOST::FUNKY)].data() ),
+	//	GameSprite( "Sue", ghostAnimeFrames, ghostAnimeSheet[static_cast<int>(GHOST::SUE)].data() ) };
 
-	GameSprite Blinky("Blinky", ghostAnimeFrames, ghostAnimeSheet[static_cast<int>(GHOST::BLINKY)].data());
-//	GameSprite Pinky("Pinky", ghostAnimeFrames, ghostAnimeSheet[static_cast<int>(GHOST::PINKY)].data());
-	//GameSprite Inky("Inky", ghostAnimeFrames, ghostAnimeSheet[static_cast<int>(GHOST::INKY)].data());
-	//GameSprite Clyde("Clyde", ghostAnimeFrames, ghostAnimeSheet[static_cast<int>(GHOST::CLYDE)].data());
-//	GameSprite Funky("Funky", ghostAnimeFrames, ghostAnimeSheet[static_cast<int>(GHOST::FUNKY)].data());
-//	GameSprite Sue("Sue", ghostAnimeFrames, ghostAnimeSheet[static_cast<int>(GHOST::SUE)].data());
-
-	Texture2D pacman = LoadTexture("./assets/pacman/CEDX/Character Skins - Smooth.png");        // Texture loading
-	Rectangle frameRec = { 0.0f, 0.0f, (float)pacman.width / 6, (float)pacman.height };
+	Texture2D pacman = LoadTexture("./assets/pacman/CEDX/Character Skins - Smooth.png"); // Texture loading
+	Rectangle frameRect = { 0.0f, 0.0f, (float)pacman.width / 6, (float)pacman.height };
 	//Setup Basic Audio
 	InitAudioDevice();
+
 	std::filesystem::path assetBase = std::filesystem::current_path() / "AudioFX" / "Collision";
 
 	int m = image.height;
@@ -288,7 +304,8 @@ int main()
 			Blinky.setDirection(DIR::DOWN);
 			Blinky.setVelocity(Vector2{ 0.0f , 2.0f });
 		}
-
+		Blinky.ApplyVelocity();
+		std::println( "BLINKY HAS A NEW POSITION: {0}, {1}", Blinky.Position().x, Blinky.Position().y );
 		Rectangle nextBox{ (rec.x + velocityX),(rec.y + velocityY),rec.width,rec.height }, spriteBox = Blinky.boundingBox();
 
 		bool CollisionTwo{ CheckCollisionRecs(nextBox, recTwo) }, CollisionThree{ CheckCollisionRecs(nextBox, recThree) },
@@ -315,11 +332,8 @@ int main()
 			}
 			if (collisionBox.height != 0.0f) {
 				velocityY > 0 ? recThree.y += velocityY : recThree.y += velocityY;
-			//	if (deltaY > -velocityY)	deltaY = -velocityY;
+
 			}
-
-	//		deltaX = -velocityX;
-
 		};
 
 		rec = nextBox;
@@ -360,9 +374,14 @@ int main()
 		Blinky.ApplyVelocity();
 
 		Blinky.Travel() ? Blinky.setAnimationState(ANIMATION_STATE::MOVING) : Blinky.setAnimationState(ANIMATION_STATE::IDLE);
+		Blinky.animate();
 		Blinky.updatePosition();
 		//Collision Sound Effects
+		Rectangle src = { 0, 0, 50, 50 };          // part of the texture (pixels)
+		Rectangle dst = { Blinky.Position().x, Blinky.Position().y, 50, 50 };    // where/how big on screen
+		Vector2 origin = { 0, 0 };
 
+		DrawTexturePro( Blinky.ActiveTexture(), src, dst, origin, 0.0f, WHITE);
 		if (CollisionPowerUp) { objectVisible[3] = false; powerUpActive = true; PlaySound(soundClips[0]); powerBumpBoost = 25.0f; }
 		//Reset Counter and Positions
 		if (IsKeyDown(KEY_R)) {
@@ -384,11 +403,10 @@ int main()
 		//Escape Key to Exit
 		if (IsKeyDown(KEY_ESCAPE)) break;
 
-		if (recTwo.x > screenWidth || recTwo.x <  (0 + (recTwo.width / 2))
-			|| recTwo.y >(screenHeight - (recTwo.height / 2)) || recTwo.y < (0 + (recTwo.height / 2))
-			|| recThree.x > screenWidth || recThree.x < (0 + (recThree.width / 2))
-			|| recThree.y >(screenHeight - (recThree.height / 2)) || recThree.y < (0 + (recThree.height / 2)))
-		{
+		if (recTwo.x + recTwo.width  > screenWidth || recTwo.x <  0.0f
+			|| (recTwo.y + recTwo.height ) >screenHeight || recTwo.y < 0.0f
+			|| (recThree.x + recThree.width) > screenWidth || recThree.x < 0.0f
+			||( (recThree.y +recThree.height) > screenHeight ) || (recThree.y < 0.0f)){
 			rec.x = targetOrigin.x - 50;
 			rec.y = targetOrigin.y - 50;
 			recTwo.x = recTwoOrigin.x;
@@ -407,11 +425,12 @@ int main()
 		//Drawing Loop
 		BeginDrawing();
 		ClearBackground(RAYWHITE);
-		DrawText(std::to_string(collisionCounter).c_str(), 20, 20, 20, BLACK);
+
 		if (objectVisible[0]) DrawRectangle(rec.x, rec.y, rec.width, rec.height, RED);
 		if (objectVisible[1]) DrawRectangle(recTwo.x, recTwo.y, recTwo.width, recTwo.height, BLUE);
 		if (objectVisible[2]) DrawRectangle(recThree.x, recThree.y, recThree.width, recThree.height, GREEN);
 		if (objectVisible[3]) DrawRectangle(powerBump.x, powerBump.y, powerBump.width, powerBump.height, YELLOW);
+		DrawTextureRec(testTex, rec, Blinky.Position(), GREEN);
 		EndDrawing();
 	}
 
