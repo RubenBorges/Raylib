@@ -1,6 +1,6 @@
 #include "Vec2F.h"
 
-	Vec2F::Vec2F() = default;
+Vec2F::Vec2F() {x = 0.0f; y = 0.0f;};
 	Vec2F::Vec2F(float _x, float _y) : x{ _x }, y{ _y } {};
 	Vec2F::Vec2F(const Vector2 vec) : x{ vec.x }, y{ vec.y } {};
 	Vec2F::Vec2F(const Vector2& vec) : x{ vec.x }, y{ vec.y } {};
@@ -18,17 +18,18 @@
 		y = other.y;
 		return;
 	}
+	void Vec2F::operator=( const Vec2F& other ) {
+		x = other.x;
+		y = other.y;
+		return;
+	}
 	bool Vec2F::operator==(const Vector2& other) const {
 		return (x == other.x && y == other.y);
 	}
 	bool Vec2F::operator==(const Vec2F& other) const {
 		return (x == other.x && y == other.y);
 	}
-	void Vec2F::operator=(const Vec2F& other)  {
-		x = other.x;
-		y = other.y;
-		return;
-	}
+
 	bool Vec2F::operator!=(const Vector2& other) const {
 		return !(*this == other);
 	}
